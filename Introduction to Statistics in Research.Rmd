@@ -1,0 +1,101 @@
+---
+title: "A Brief Introduction to Statistics in Research"
+author: "Joseph Plummer"
+date: "8/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+## Agenda
+
+The aim of this document is to teach you some of the basic statistical methods that can be used in the world of medical research. You are encouraged to edit the document however you please. If you have any questions, please feel free to contact me via my email: **joseph.plummer\@cchmc.org**.
+
+Of course, we are only scraping the surface of data science in statistics, but hopefully this will help ease you into the topic.
+
+\pagebreak
+
+## Step 1) Understand your data.
+
+The most important step in all data science and analytics is to **understand your data**. This will help guide your analysis and figure design.
+
+First, load the base package "datasets". This package contains some datasets to work from. It also contains some functions that will come in handy for us. Also load the package "LearnBayes". If you do not have these packages installed, download them from the *Packages* tab in RStudio, or type `install.packages("LearnBayes")` into the command window.
+
+```{r loaddatasets, echo=TRUE}
+library(datasets)
+library(LearnBayes)
+```
+
+We will work with 'studentdata' from the 'LearnBayes' package. Load the data, and write a script to gain a preliminary overview of the data.
+
+```{r}
+data(studentdata) 
+head(studentdata, n = 6) # Top six rows
+dim(studentdata) # Dimensions
+summary(studentdata) # Summary of each column
+```
+
+I want to know how many hours each student slept. We use the columns: 'ToSleep' and 'WakeUp'. Create a new column in the data folder. Examine the data again.
+
+```{r}
+studentdata$HoursSlept <- studentdata$WakeUp - studentdata$ToSleep
+names(studentdata)
+head(studentdata)
+dim(studentdata)
+```
+
+Can we present the data graphically? Yes!
+
+We can use histograms, non-parametric density curves, and box plots. Firstly, let us consider histograms. Histograms use two types: counts/frequencies or density. Let us plot both types.
+
+Frequency distribution:
+
+```{r}
+hist(studentdata$HoursSlept,
+     freq = TRUE,
+     xlab = "Hours Slept",
+     ylab = "Frequency",
+     col = "red",
+     main = "Histogram of Hours Slept",
+     sub = "Bowling Green University Student Data")
+rug(studentdata$HoursSlept, side = 1, col = "blue")
+
+```
+
+The frequency distribution simply shows the frequency, or count, of each data bin. Another option is to plot a density histogram, where the y-axis is rescaled such that the total area under the histogram sums to 1. It is also possible to overlay a non-parametric density curve on this data for a more clear visual.
+
+Density distribution: Recall when we ran `summary(studentdata)`, there were some NA data slots. Omit these, and overlay the results on the histogram.
+
+```{r}
+hist(studentdata$HoursSlept,
+     freq = FALSE,
+     density = 10, # fill amount of lines
+     xlab = "Hours Slept",
+     ylab = "Density",
+     col = "black",
+     main = "Density Histogram of Hours Slept & Non-parametric Density Curve",
+     sub = "Bowling Green University Student Data")
+# The y-axis is rescaled, so that the total area sums up to 1.
+lines(density(studentdata$HoursSlept, 
+              na.rm = TRUE), # na.rm = TRUE means remove NA values from function
+      col = "red",
+      lwd = 2)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
