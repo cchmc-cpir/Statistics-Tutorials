@@ -9,13 +9,15 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-[![](InfoLogo.png)](https://cpir.cchmc.org/)
+------------------------------------------------------------------------
 
 ## R Markdown
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+------------------------------------------------------------------------
 
 ## Agenda
 
@@ -25,7 +27,9 @@ Of course, we are only scraping the surface of data science in statistics, but h
 
 \pagebreak
 
-## Step 1) Understand your data.
+------------------------------------------------------------------------
+
+## Part 1) Understand your data.
 
 The most important step in all data science and analytics is to **understand your data**. This will help guide your analysis and figure design.
 
@@ -58,7 +62,7 @@ Can we present the data graphically? Yes!
 
 We can use histograms, non-parametric density curves, and box plots. Firstly, let us consider boxplots.
 
-**Boxplots:**
+### **Boxplots:**
 
 Let us plot the number of hours slept by students at BGSU as a box plot.
 
@@ -79,11 +83,11 @@ Box plots are good to:
 
 In this case, we can visually examine the outliers. We can also see that the number of hours that students sleep is approximately normally distributed. Of course, this is only a visual overview. Let's see if histograms can tell us anything more.
 
-**Histograms:**
+### **Histograms:**
 
 Histograms use two types: counts/frequencies or density. Let us plot both types.
 
-**Frequency distribution:**
+#### **Frequency distribution:**
 
 ```{r}
 hist(studentdata$HoursSlept,
@@ -100,7 +104,7 @@ rug(studentdata$HoursSlept, side = 1, col = "blue")
 
 The frequency distribution simply shows the frequency, or count, of each data bin.
 
-**Density distribution:**
+#### **Density distribution:**
 
 Another option is to plot a density histogram, where the y-axis is rescaled such that the total area under the histogram sums to 1. It is also possible to overlay a non-parametric density curve on this data for a more clear visual. To do this, you must also remove the NA variables.
 
@@ -120,7 +124,7 @@ lines(density(studentdata$HoursSlept,
       lwd = 2)
 ```
 
-**Example problem:**
+### **Example problem:**
 
 Goal: Build a histogram for both males and females and plot in same frame (side by side). Superimpose each histogram with its non-parametric density curve. Superimpose each histogram with an appropriate normal curve. The normal curve is a model. We want to know how well the histogram represents a normal distribution.
 
@@ -186,7 +190,9 @@ Ultimately, these plots are telling us (visually), how the data is distributed b
 
 Luckily, there is one method to evaluate the degree to which data is normally distributed. This is achieved with a *Shapiro-Wilk Normality Test*. R can do this for us.
 
-**Shapiro-Wilk Normality Test:** Let us set up some test conditions:
+### **Shapiro-Wilk Normality Test:** 
+
+Let us set up some test conditions:
 
 H0: Null hypothesis. Our null hypothesis is the 'hypothesis of skepticism'. The data is normally distributed. There is nothing for us to think otherwise.
 
@@ -211,7 +217,7 @@ shapiro.test(Females$HoursSlept)
 
 These results are important. They will guide us on our future hypothesis testing.
 
-## Step 2) Hypothesis Testing
+## Part 2) Hypothesis Testing
 
 Suppose we want to test one population against another. For example, does a healthy population have greater RBC transfer (gas-exchange) signal than a disease population?
 
@@ -241,7 +247,7 @@ And so on...
 
 Of course, there are exceptions and small modifications that can be made to all of these. But the critical piece to understand is that you must use the correct test for your statistical question. Each test will deliver different results. This is why it is important to understand your data before you analyze it.
 
-**Example problems:**
+### **Example problems:**
 
 Let us compare 2 normally distributed samples, each with the same distribution shape. Suppose the means of each sample are equal.
 
@@ -299,14 +305,32 @@ t.test(Males$HoursSlept,
 
 The results are the same. p \> 0.05. But hold on! The p-values for each test are different. (Albeit by only 0.04). While we haven't seen it here, the difference in testing strategy could be the make or break decision in a research project about whether two samples are different.
 
-## Step 3) Diagnostic Tests and ROC Analysis
+In more complicated cases, it is not uncommon to transform your data (e.g. via a log transform). We will touch on this in a later session (as it is relevant to our gas-exchange analysis). This is one way to deal with non-normal distributions.
 
-## Including Plots
+### 
+A general note:
 
-You can also embed plots, for example:
+If you are ever curious of what type of statistical test to do, I recommend writing down everything you know about your data, and then making an intuitive google attempt with your findings. There are hundreds, if not thousands of examples of statistical tests online. The hard part is deciphering them and making sure you have the right test for your data.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+## Part 3) Diagnostic Tests and ROC Analysis
+
+For this next section, we are going to consider diagnostic tests, and how to assess their effectiveness. To help us understand this, let's work through a case study.
+
+Load the `pROC` package from R:
+
+```{r}
+# install.packages("pROC")
+library(pROC)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+We are going to study the `aSAH` data from the `pROC` package. This dataset summarizes several clinical and one laboratory variable of 113 patients with an aneurysmal subarachnoid hemorrhage. To find out more information, type `?aSAH` into the command window.
+
+Examine the data:
+
+```{r}
+data(aSAH) # Load the data.
+dim(aSAH) # Examine the dimensions.
+head(aSAH, n = 5) # Examine the top 5 rows.
+```
+
+## 
