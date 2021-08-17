@@ -9,6 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+[![](InfoLogo.png)](https://cpir.cchmc.org/)
+
 ## R Markdown
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
@@ -54,9 +56,34 @@ dim(studentdata)
 
 Can we present the data graphically? Yes!
 
-We can use histograms, non-parametric density curves, and box plots. Firstly, let us consider histograms. Histograms use two types: counts/frequencies or density. Let us plot both types.
+We can use histograms, non-parametric density curves, and box plots. Firstly, let us consider boxplots.
 
-Frequency distribution:
+**Boxplots:**
+
+Let us plot the number of hours slept by students at BGSU as a box plot.
+
+```{r}
+boxplot(studentdata$HoursSlept,
+        ylab = "Hours Slept",
+        main = "Box Plot of Hours Slept (BGSU Data)",
+        col = "mistyrose")
+```
+
+The dark line in the middle of the data is the median of the data. The top line of the box represents the third quartile. The bottom line of the box represents the first quartile. The top whisker typically represents the maximum of the data - but here it does not. The bottom whisker typically represents the minimum of the data - but here it does not. We see three data points outside the whiskers - outliers (2 s.d. from the mean).
+
+Box plots are good to:
+
+1.  Check for outliers (2 s.d. from the mean).
+
+2.  Check how symmetric the plot is? Symmetry = normal distribution!
+
+In this case, we can visually examine the outliers. We can also see that the number of hours that students sleep is approximately normally distributed. Of course, this is only a visual overview. Let's see if histograms can tell us anything more.
+
+**Histograms:**
+
+Histograms use two types: counts/frequencies or density. Let us plot both types.
+
+**Frequency distribution:**
 
 ```{r}
 hist(studentdata$HoursSlept,
@@ -71,9 +98,11 @@ rug(studentdata$HoursSlept, side = 1, col = "blue")
 
 ```
 
-The frequency distribution simply shows the frequency, or count, of each data bin. Another option is to plot a density histogram, where the y-axis is rescaled such that the total area under the histogram sums to 1. It is also possible to overlay a non-parametric density curve on this data for a more clear visual. To do this, you must also remove the NA variables. 
+The frequency distribution simply shows the frequency, or count, of each data bin.
 
-Density distribution: 
+**Density distribution:**
+
+Another option is to plot a density histogram, where the y-axis is rescaled such that the total area under the histogram sums to 1. It is also possible to overlay a non-parametric density curve on this data for a more clear visual. To do this, you must also remove the NA variables.
 
 ```{r}
 hist(studentdata$HoursSlept,
@@ -89,8 +118,188 @@ lines(density(studentdata$HoursSlept,
               na.rm = TRUE), # na.rm = TRUE means remove NA values from function
       col = "red",
       lwd = 2)
-
 ```
+
+**Example problem:**
+
+Goal: Build a histogram for both males and females and plot in same frame (side by side). Superimpose each histogram with its non-parametric density curve. Superimpose each histogram with an appropriate normal curve. The normal curve is a model. We want to know how well the histogram represents a normal distribution.
+
+```{r}
+par(mfrow = c(1, 2)) # Set up a frame with 1 row and 2 columns
+# We fill up the blank frame with graphs, 1 by 1.
+
+# Segregate data by gender:
+Males <- subset(studentdata, studentdata$Gender == "male")
+Females <- subset(studentdata, studentdata$Gender == "female")
+
+# Plot density histogram for males:
+hist(Males$HoursSlept,
+     freq = FALSE,
+     density = 10, 
+     breaks = 12,
+     xlab = "Hours Slept",
+     ylab = "Density",
+     ylim=c(0, 0.3),
+     col = "black",
+     main = "Density Histogram of \n Hours Slept of Males",
+     sub = "Bowling Green University Student Data")
+lines(density(Males$HoursSlept, 
+              na.rm = TRUE), # na.rm means remove NA values from function
+      col = "blue",
+      lwd = 2)
+# Plot a normal curve: 
+mean_Males = mean(Males$HoursSlept, na.rm = TRUE) # Exclude NA's
+sd_Males = sd(Males$HoursSlept, na.rm = TRUE) # Exclude NA's
+curve(dnorm(x, mean = mean_Males, sd = sd_Males),
+      col = "green",
+      lwd = 2,
+      add = TRUE)
+
+# Plot a density histogram for females:
+hist(Females$HoursSlept,
+     freq = FALSE,
+     density = 20, 
+     breaks = 12,
+     xlab = "Hours Slept",
+     ylab = "Density",
+     ylim=c(0, 0.3),
+     col = "black",
+     main = "Density Histogram of \n Hours Slept of Females",
+     sub = "Bowling Green University Student Data")
+lines(density(Females$HoursSlept, 
+              na.rm = TRUE), # na.rm means remove NA values from function
+      col = "pink",
+      lwd = 2)
+# Plot a normal curve: (use modelling values from summary. This is NOT a fit)
+mean_Females = mean(Females$HoursSlept, na.rm = TRUE) # Exclude NA's
+sd_Females = sd(Females$HoursSlept, na.rm = TRUE) # Exclude NA's
+curve(dnorm(x, mean = mean_Females, sd = sd_Females),
+      col = "magenta",
+      lwd = 2,
+      add = TRUE)
+
+# Close the parallel plot.
+par(mfrow = c(1,1))
+```
+
+Ultimately, these plots are telling us (visually), how the data is distributed between males and females, and whether the distributions are *normal* or not. The latter is a very important question. Whether or not data is normally distributed will determine what kind of hypothesis test one should run.
+
+Luckily, there is one method to evaluate the degree to which data is normally distributed. This is achieved with a *Shapiro-Wilk Normality Test*. R can do this for us.
+
+**Shapiro-Wilk Normality Test:** Let us set up some test conditions:
+
+H0: Null hypothesis. Our null hypothesis is the 'hypothesis of skepticism'. The data is normally distributed. There is nothing for us to think otherwise.
+
+H1: The alternative hypothesis. The data is not normally distributed. In the eyes of the test, there is something funky going on with our data.
+
+Now run the test:
+
+```{r}
+shapiro.test(studentdata$HoursSlept)
+```
+
+Judgement: W = 0.98951, p-value = 0.0001288
+
+If p \< 0.05, we REJECT the null hypothesis. In our case, this means the data is NOT normally distributed.
+
+We see similar results if we run the test on males and females individually.
+
+```{r}
+shapiro.test(Males$HoursSlept)
+shapiro.test(Females$HoursSlept)
+```
+
+These results are important. They will guide us on our future hypothesis testing.
+
+## Step 2) Hypothesis Testing
+
+Suppose we want to test one population against another. For example, does a healthy population have greater RBC transfer (gas-exchange) signal than a disease population?
+
+To answer questions like these, we can use hypothesis testing. A hypothesis test is a statistical way of measuring a whether a mathematical statement/condition is true, or false (and how likely these statements are). There are many, *many*, hypothesis tests. Which one you use will depend on the data you are assessing. We will go over a few examples below.
+
+Suppose you want to compare two samples from two populations (can be same or independent of each other, but must have the same variance). Suppose each sample is normally distributed.
+
+*Use a two-sample t-test.*
+
+Suppose you want to compare *more than two* samples from more than two populations (can be same or independent of each other, but must have the same variance). Suppose each sample is normally distributed.
+
+*Use ANOVA.*
+
+Suppose you want to compare two samples from two populations (*independent* of each other, so they have different variances). Suppose each sample is **not** normally distributed.
+
+*Use a Wilcoxon-rank Sum test.*
+
+Suppose you want to compare two samples from the same population. Suppose each sample is **not** normally distributed.
+
+*Use a Wilcoxon-signed Rank test.*
+
+Suppose you want to compare *one* sample mean against some other arbitrary mean. Suppose the sample is **not** normally distributed.
+
+*Use a sign test.*
+
+And so on...
+
+Of course, there are exceptions and small modifications that can be made to all of these. But the critical piece to understand is that you must use the correct test for your statistical question. Each test will deliver different results. This is why it is important to understand your data before you analyze it.
+
+**Example problems:**
+
+Let us compare 2 normally distributed samples, each with the same distribution shape. Suppose the means of each sample are equal.
+
+Because the variance of each sample is equal, we can use a two sample t-test. The assumption for the t-test is that both groups are sampled from normal distributions with equal variances. The null hypothesis is that the two means are equal, and the alternative is that they are not. Thus, we can expect a p-value \> 0.05.
+
+```{r}
+x = rnorm(n = 50, mean = 5, sd = 0.2)
+y = rnorm(n = 50, mean = 5, sd = 0.2)
+t.test(x,y,, var.equal = TRUE)
+```
+
+The p-value on this t-test is \> 0.05, as expected. What if we change the means by 1 standard deviation?
+
+```{r}
+x = rnorm(n = 50, mean = 5, sd = 0.2)
+y = rnorm(n = 50, mean = 5.2, sd = 0.2)
+t.test(x,y,, var.equal = TRUE)
+```
+
+The p-value has plummeted to \< 0.05. We reject the null hypothesis. As confirmed, the means are different.
+
+What if the two samples are pulled from different populations, so the variances are not equal? (assume the samples are each normally distributed still). We can no longer use the standard two-sample t-test. We must modify the t-test to adjust the number of degrees of freedom for unequal variance. R can do this for us. Compare the results between the two types of t-tests.
+
+```{r}
+x = rnorm(n = 50, mean = 5, sd = 0.1)
+y = rnorm(n = 50, mean = 5, sd = 1)
+t.test(x,y,, var.equal = TRUE) # Two-sample t-test
+t.test(x,y,, var.equal = FALSE) # Welch two-sample t-test
+```
+
+The p-value results are close, but not the same. There are scenarios where your test type can change your results significantly. We already see that the degrees of freedom change significantly. Hence if you want to be robust with your analysis, it is critical to get your test conditions right.
+
+What if your data is **not** normally distributed?
+
+Let us go back to the `studentdata` data set that we examined earlier. We established that the number of hours slept by both males and females at Bowling Green University were not normally distributed. So how do we compare these two samples?
+
+The **unpaired two-samples Wilcoxon test** (also known as **Wilcoxon rank sum test** or **Mann-Whitney** test) is a non-parametric alternative to the unpaired two-samples t-test, which can be used to compare two independent groups of samples. It's used when your data are not normally distributed.
+
+We can use the `wilcox.test` function in R to test the two samples. Our null hypothesis is that if you chose randomly selected values from each population, then the probability of X being greater than Y is the same as the probability of Y being greater than X. The alternative hypothesis is the opposite, in that the populations are different (coded as `alternative = "two.sided"`) . Compare the results of the Wilcoxon rank sum test against the Welch two-sided t-test.
+
+```{r}
+wilcox.test(Males$HoursSlept,
+                Females$HoursSlept,
+                alternative = "two.sided", # Can be "greater" or "less"
+                paired = FALSE)
+```
+
+The results of the Wilcoxon rank sum test tell us that the two populations are not significantly different. Do you get the same results from a Welch two-sided t-test?
+
+```{r}
+t.test(Males$HoursSlept,
+                Females$HoursSlept,
+       var.equal = FALSE)
+```
+
+The results are the same. p \> 0.05. But hold on! The p-values for each test are different. (Albeit by only 0.04). While we haven't seen it here, the difference in testing strategy could be the make or break decision in a research project about whether two samples are different.
+
+## Step 3) Diagnostic Tests and ROC Analysis
 
 ## Including Plots
 
