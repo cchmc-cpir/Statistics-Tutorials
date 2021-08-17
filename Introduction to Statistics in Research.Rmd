@@ -1,7 +1,7 @@
 ---
 title: "A Brief Introduction to Statistics in Research"
 author: "Joseph Plummer"
-date: "8/16/2021"
+date: "8/18/2021"
 output: html_document
 ---
 
@@ -66,13 +66,14 @@ hist(studentdata$HoursSlept,
      col = "red",
      main = "Histogram of Hours Slept",
      sub = "Bowling Green University Student Data")
+# Include a rug plot to show where the data points lie exactly: 
 rug(studentdata$HoursSlept, side = 1, col = "blue")
 
 ```
 
-The frequency distribution simply shows the frequency, or count, of each data bin. Another option is to plot a density histogram, where the y-axis is rescaled such that the total area under the histogram sums to 1. It is also possible to overlay a non-parametric density curve on this data for a more clear visual.
+The frequency distribution simply shows the frequency, or count, of each data bin. Another option is to plot a density histogram, where the y-axis is rescaled such that the total area under the histogram sums to 1. It is also possible to overlay a non-parametric density curve on this data for a more clear visual. To do this, you must also remove the NA variables. 
 
-Density distribution: Recall when we ran `summary(studentdata)`, there were some NA data slots. Omit these, and overlay the results on the histogram.
+Density distribution: 
 
 ```{r}
 hist(studentdata$HoursSlept,
@@ -88,6 +89,7 @@ lines(density(studentdata$HoursSlept,
               na.rm = TRUE), # na.rm = TRUE means remove NA values from function
       col = "red",
       lwd = 2)
+
 ```
 
 ## Including Plots
