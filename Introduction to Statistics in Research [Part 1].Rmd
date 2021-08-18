@@ -190,7 +190,7 @@ Ultimately, these plots are telling us (visually), how the data is distributed b
 
 Luckily, there is one method to evaluate the degree to which data is normally distributed. This is achieved with a *Shapiro-Wilk Normality Test*. R can do this for us.
 
-### **Shapiro-Wilk Normality Test:** 
+### **Shapiro-Wilk Normality Test:**
 
 Let us set up some test conditions:
 
@@ -216,6 +216,8 @@ shapiro.test(Females$HoursSlept)
 ```
 
 These results are important. They will guide us on our future hypothesis testing.
+
+------------------------------------------------------------------------
 
 ## Part 2) Hypothesis Testing
 
@@ -308,22 +310,25 @@ The results are the same. p \> 0.05. But hold on! The p-values for each test are
 In more complicated cases, it is not uncommon to transform your data (e.g. via a log transform). We will touch on this in a later session (as it is relevant to our gas-exchange analysis). This is one way to deal with non-normal distributions.
 
 ### 
+
 A general note:
 
 If you are ever curious of what type of statistical test to do, I recommend writing down everything you know about your data, and then making an intuitive google attempt with your findings. There are hundreds, if not thousands of examples of statistical tests online. The hard part is deciphering them and making sure you have the right test for your data.
+
+------------------------------------------------------------------------
 
 ## Part 3) Diagnostic Tests and ROC Analysis
 
 For this next section, we are going to consider diagnostic tests, and how to assess their effectiveness. To help us understand this, let's work through a case study.
 
-Load the `pROC` package from R:
+#### Load the `pROC` package from R:
 
 ```{r}
 # install.packages("pROC")
 library(pROC)
 ```
 
-We are going to study the `aSAH` data from the `pROC` package. This dataset summarizes several clinical and one laboratory variable of 113 patients with an aneurysmal subarachnoid hemorrhage. To find out more information, type `?aSAH` into the command window.
+We are going to study the `aSAH` data from the `pROC` package. This dataset summarizes several clinical and one laboratory variable of 113 patients with an aneurysmal subarachnoid hemorrhage. In this task, our goal is to examine whether a subject develops brain damage 14 months after surgery for a hemorrhage. We will use measurements levels of the protein: s100b, as a biomarker to determine whether a subject developed brain surgery. To find out more information about the data, type `?aSAH` into the command window.
 
 Examine the data:
 
@@ -333,4 +338,203 @@ dim(aSAH) # Examine the dimensions.
 head(aSAH, n = 5) # Examine the top 5 rows.
 ```
 
-## 
+Question: Is s100b a good discriminator? Is there a *prima facie* (correct until proven otherwise) case for adopting this protein as a discriminator? Let us answer this question.
+
+Segregate the aSAH data by outcome.
+
+```{r}
+GOOD <- subset(aSAH, aSAH$outcome == "Good")
+POOR <- subset(aSAH, aSAH$outcome == "Poor")
+```
+
+What is the distribution of this protein for good and poor outcome patients?
+
+```{r}
+summary(GOOD$s100b)
+summary(POOR$s100b)
+```
+
+The protein values of poor outcome patients tend to be larger than the protein values in the good outcome patients.
+
+#### **Here is an idea for a diagnostic test:**
+
+IF the protein value is large, I suspect brain damage after 1 year (i.e. poor outcome after 14 months). MY diagnostic test will be of the following *mien* (manner, characteristic, etc):
+
+-   Test is positive if: s100b \>= $c$
+
+-   Test is negative if: s100b \< $c$
+
+Where $c$ is the cutoff value between good and bad outcomes. Choose $c$ judiciously. Choose a $c$ with high sensitivity and high specificity.
+
+But... how do you choose $c$? You experiment with different $c$ and see what turns out the best. First, let us look at the distribution of the protein values by outcome using a non-parametric density curve (in the same graph):
+
+```{r}
+plot(density(GOOD$s100b),
+     xlab = "s100b Protein Values",
+     ylab = "Density Curve",
+     xlim = c(0.03, 2.25),
+     col = "red",
+     lwd = 2,
+     main = "Density Curves by Outcome")
+# Overlay another plot command using 'lines'
+lines(density(POOR$s100b),
+      col = "blue",
+      lwd = 2)
+legend("topright",
+       pch = 16,
+       legend = c("Good outcome patients", "Poor outcome patients"),
+       col = c("red", "blue"))
+```
+
+The density curve for good patients is spiky and concentrated about 2 different s100b protein values, while the density curve for poor patients is spread out. Thus, we can be optimistic that this would be a good predictor for future outcomes.
+
+#### Now, the hard work: choose $c$ (the cut off point).
+
+Let us build a 2x2 contingency table, and calculate sensitivity and specificity. For this table, let $c$ = 0.2, to start. The diagnostic test will be:
+
+-   Test is positive (poor outcome) if: s100b \>= 0.2
+
+-   Test is negative (good outcome) if: s100b \< 0.2
+
+**Look at the good outcome data on s100b:**
+
+How many of these observations are greater than or equal to 0.2?
+
+How many of these observations are less than 0.2?
+
+```{r}
+GOOD_test <- subset(GOOD, GOOD$s100b >= 0.2)
+```
+
+14 of the 72 s100b values of the good patients are \>= 0.2.
+
+Therefore, 58 (72 - 14) s100b values of the good patients are \< 0.2. Meanwhile for poor patients:
+
+```{r}
+POOR_test <- subset(POOR, POOR$s100b >= 0.2)
+```
+
+26 of the 41 s100b values of the poor patients are \>= 0.2.
+
+Therefore, 15 (41 - 26) s100b values of the poor patients are \< 0.2.
+
+So, the 2x2 contingency table is:
+
+| Test result    | Good outcome | Poor outcome |
+|----------------|--------------|--------------|
+| Test postitive | 14           | **26**       |
+| Test negative  | **58**       | 15           |
+
+You can calculate the sensitivity (true positive) and specificity (true negative) values from this table.
+
+-   Sensitivity = 26/41
+
+-   Specificity = 58/72
+
+Ideally, you want a sensitivity and specificity square sum as close to 1 as possible. This is known as the **gold standard**. On the other hand, you could have a sensitivity and specificity square sum equal to 0.5, which would mean your test is pointless - there is no certainty in your results.
+
+You can change $c$, and do all these calculations again to find the optimal sensitivity and specificity combination. To do this manually would be very labour intensive. Thankfully, R can do it all for us. Use the function: `roc` from the `pROC` package.
+
+```{r}
+MyROC <- roc(aSAH$outcome, 
+             aSAH$s100b,
+             levels = c("Good","Poor"),
+             direction = "<")
+```
+
+Let us examine the results of this function:
+
+```{r}
+names(MyROC) # Names of variables in output
+```
+
+We can extract a table containing the sensitivity and specificity values for a range of cut-off values. We have to create this from the output of the `roc` function.
+
+```{r}
+MyROC1 <- data.frame(Sensitivity = MyROC$sensitivities,
+                     Specificity = MyROC$specificities,
+                     CutOff = MyROC$thresholds) # threshold = cut-off value
+MyROC1
+```
+
+Suppose we want to plot this data. One common way to do this is to plot **Sensitivity vs (1 - Specificity)**. Then, you can overlay a line correlating to all the points where the square sum between sensitivity and specificity equals 1. This kind of plot is known as an **ROC** curve:
+
+```{r}
+plot(1 - MyROC1$Specificity,
+     MyROC1$Sensitivity,
+     xlab = "1 - Specificity",
+     ylab = "Sensitivity",
+     type = "l",
+     col = "red",
+     main = "ROC Curve of the Protein s100b")
+# Overlay a line where the square sum of sensitivity and specificity = 1
+abline(0, 1, # Intercept = 0, slope = 1
+       col = "black")
+legend("bottomright",
+       legend = "ROC curve",
+       pch = 16,
+       col = "red",
+       lwd = 3)
+```
+
+In this plot, every point along the ROC curve correlates to an individual cut-off value. If a cut-off value was useless, then the sensitivity/specificity combination would lie on the diagonal line. If a cut-off value was exceptional (i.e. produced sensitivity = 1, specificity = 1), then the point would lie in the top corner - at the furthest position away from the diagonal line. If a biomarker was completely useless for all cut-off values, then the area under the curve would equal 0.5. You can find the area under the curve using: `MyROC$auc`.
+
+Let us go back to the original question: what value of $c$ makes the best biomarker for us?
+
+To recommend a $c$, consider the ideal biomarker:
+
+-   Ideal sensitivity = 1.0
+
+-   Ideal specificity = 1.0
+
+Take any $c$, and look at its (Sensitivity, Specificity). How close are each of them to (1.0, 1.0)? Calculate the Euclidean distance:
+
+```{r}
+MyROC1$DistanceSquared <- (MyROC1$Sensitivity - 1)^2 +
+   (MyROC1$Specificity - 1)^2
+MyROC1
+```
+
+Our optimal criterion: Choose c such that its sensitivity and specificity are closest to (1.0, 1.0).
+
+```{r}
+min(MyROC1$DistanceSquared)
+```
+
+This correlates to...
+
+-   My test is positive if: s100b \>= 0.205
+
+-   My test is negative if: s100b \< 0.205
+
+-   The sensitivity is = 63.41%
+
+-   The specificity is = 80.56%
+
+Final flourish: Mark this on the ROC graph.
+
+```{r}
+plot(1 - MyROC1$Specificity,
+     MyROC1$Sensitivity,
+     xlab = "1 - Specificity",
+     ylab = "Sensitivity",
+     type = "l",
+     col = "red",
+     main = "ROC Curve of the Protein s100b")
+# Overlay a line where the square sum of sensitivity and specificity = 1
+abline(0, 1, # Intercept = 0, slope = 1
+       col = "black")
+legend("bottomright",
+       legend = "ROC curve",
+       pch = 16,
+       col = "red",
+       lwd = 3)
+# Add the arrows on the graph to show the ideal cut-off value.
+arrows(0.0, 1.0, (1 - MyROC1$Specificity), MyROC1$Sensitivity,
+       col = "black")
+arrows(0.0, 1.0, (1 - 0.8056), 0.6341,
+       col = "green",
+       lwd = 2)
+```
+
+## Next session: Logistics, Linear Regression, Non-linear Regression

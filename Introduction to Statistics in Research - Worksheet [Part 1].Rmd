@@ -1,0 +1,383 @@
+---
+title: "A Brief Introduction to Statistics in Research"
+author: "Joseph Plummer"
+date: "8/18/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+------------------------------------------------------------------------
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+------------------------------------------------------------------------
+
+## Agenda
+
+The aim of this document is to teach you some of the basic statistical methods that can be used in the world of medical research. You are encouraged to edit the document however you please. If you have any questions, please feel free to contact me via my email: **joseph.plummer\@cchmc.org**.
+
+Of course, we are only scraping the surface of data science in statistics, but hopefully this will help ease you into the topic.
+
+\pagebreak
+
+------------------------------------------------------------------------
+
+## Part 1) Understand your data.
+
+The most important step in all data science and analytics is to **understand your data**. This will help guide your analysis and figure design.
+
+First, load the base package "datasets". This package contains some datasets to work from. It also contains some functions that will come in handy for us. Also load the package "LearnBayes". If you do not have these packages installed, download them from the *Packages* tab in RStudio, or type `install.packages("LearnBayes")` into the command window.
+
+```{r loaddatasets, echo=TRUE}
+
+```
+
+We will work with 'studentdata' from the 'LearnBayes' package. Load the data, and write a script to gain a preliminary overview of the data.
+
+```{r}
+
+```
+
+We want to know how many hours each student slept. We use the columns: 'ToSleep' and 'WakeUp'. Create a new column in the data folder. Examine the data again.
+
+```{r}
+
+```
+
+Can we present the data graphically? Yes!
+
+We can use histograms, non-parametric density curves, and box plots. Firstly, let us consider boxplots.
+
+### **Boxplots:**
+
+Let us plot the number of hours slept by students at BGSU as a box plot.
+
+```{r}
+
+```
+
+The dark line in the middle of the data is the median of the data. The top line of the box represents the third quartile. The bottom line of the box represents the first quartile. The top whisker typically represents the maximum of the data - but here it does not. The bottom whisker typically represents the minimum of the data - but here it does not. We see three data points outside the whiskers (outliers lie >2 s.d. from the mean).
+
+Box plots are good to:
+
+1.  Check for outliers (2 s.d. from the mean).
+
+2.  Check how symmetric the plot is? Symmetry = normal distribution!
+
+In this case, we can visually examine the outliers. We can also see that the number of hours that students sleep is approximately normally distributed. Of course, this is only a visual overview. Let's see if histograms can tell us anything more.
+
+### **Histograms:**
+
+Histograms use two types: counts/frequencies or density. Let us plot both types.
+
+#### **Frequency distribution:**
+
+```{r}
+
+
+```
+
+The frequency distribution simply shows the frequency, or count, of each data bin.
+
+#### **Density distribution:**
+
+Another option is to plot a density histogram, where the y-axis is rescaled such that the total area under the histogram sums to 1. It is also possible to overlay a non-parametric density curve on this data for a more clear visual. To do this, you must also remove the NA variables.
+
+```{r}
+
+```
+
+### **Example problem:**
+
+Goal: Build a histogram for both males and females and plot in same frame (side by side). Superimpose each histogram with its non-parametric density curve. Superimpose each histogram with an appropriate normal curve. The normal curve is a model. We want to know how well the histogram represents a normal distribution.
+
+```{r}
+
+```
+
+Ultimately, these plots are telling us (visually), how the data is distributed between males and females, and whether the distributions are *normal* or not. The latter is a very important question. Whether or not data is normally distributed will determine what kind of hypothesis test one should run.
+
+Luckily, there is one method to evaluate the degree to which data is normally distributed. This is achieved with a *Shapiro-Wilk Normality Test*. R can do this for us.
+
+### **Shapiro-Wilk Normality Test:**
+
+Let us set up some test conditions:
+
+H0: Null hypothesis. Our null hypothesis is the 'hypothesis of skepticism'. The data is normally distributed. There is nothing for us to think otherwise.
+
+H1: The alternative hypothesis. The data is not normally distributed. In the eyes of the test, there is something funky going on with our data.
+
+Now run the test:
+
+```{r}
+
+```
+
+Judgement: W = 0.98951, p-value = 0.0001288
+
+If p \< 0.05, we REJECT the null hypothesis. In our case, this means the data is NOT normally distributed.
+
+We see similar results if we run the test on males and females individually.
+
+```{r}
+
+```
+
+These results are important. They will guide us on our future hypothesis testing.
+
+------------------------------------------------------------------------
+
+## Part 2) Hypothesis Testing
+
+Suppose we want to test one population against another. For example, does a healthy population have greater RBC transfer (gas-exchange) signal than a disease population?
+
+To answer questions like these, we can use hypothesis testing. A hypothesis test is a statistical way of measuring a whether a mathematical statement/condition is true, or false (and how likely these statements are). There are many, *many*, hypothesis tests. Which one you use will depend on the data you are assessing. We will go over a few examples below.
+
+Suppose you want to compare two samples from two populations (can be same or independent of each other, but must have the same variance). Suppose each sample is normally distributed.
+
+*Use a two-sample t-test.*
+
+Suppose you want to compare *more than two* samples from more than two populations (can be same or independent of each other, but must have the same variance). Suppose each sample is normally distributed.
+
+*Use ANOVA.*
+
+Suppose you want to compare two samples from two populations (*independent* of each other, and they have different variances). Suppose each sample is **not** normally distributed.
+
+*Use a Wilcoxon-rank Sum test.*
+
+Suppose you want to compare two samples from the same population (so they have the same variance). Suppose each sample is **not** normally distributed.
+
+*Use a Wilcoxon-signed Rank test.*
+
+Suppose you want to compare *one* sample mean against some other arbitrary mean. Suppose the sample is **not** normally distributed.
+
+*Use a sign test.*
+
+And so on...
+
+Of course, there are exceptions and small modifications that can be made to all of these. But the critical piece to understand is that you must use the correct test for your statistical question. Each test will deliver different results. This is why it is important to understand your data before you analyze it.
+
+### **Example problems:**
+
+Let us compare 2 normally distributed samples, each with the same distribution shape. Suppose the means of each sample are equal.
+
+Because the variance of each sample is equal, we can use a two sample t-test. The assumption for the t-test is that both groups are sampled from normal distributions with equal variances. The null hypothesis is that the two means are equal, and the alternative is that they are not. Thus, we can expect a p-value \> 0.05.
+
+```{r}
+
+```
+
+The p-value on this t-test is \> 0.05, as expected. What if we change the means by 1 standard deviation?
+
+```{r}
+
+```
+
+The p-value has plummeted to \< 0.05. We reject the null hypothesis. As confirmed, the means are different.
+
+What if the two samples are pulled from different populations, so the variances are not equal? (assume the samples are each normally distributed still). We can no longer use the standard two-sample t-test. We must modify the t-test to adjust the number of degrees of freedom for unequal variance. R can do this for us. Compare the results between the two types of t-tests.
+
+```{r}
+
+```
+
+The p-value results are close, but not the same. There are scenarios where your test type can change your results significantly. We already see that the degrees of freedom change significantly. Hence if you want to be robust with your analysis, it is critical to get your test conditions right.
+
+What if your data is **not** normally distributed?
+
+Let us go back to the `studentdata` data set that we examined earlier. We established that the number of hours slept by both males and females at Bowling Green University were not normally distributed. So how do we compare these two samples?
+
+The **unpaired two-samples Wilcoxon test** (also known as **Wilcoxon rank sum test** or **Mann-Whitney** test) is a non-parametric alternative to the unpaired two-samples t-test, which can be used to compare two independent groups of samples. It's used when your data are not normally distributed.
+
+We can use the `wilcox.test` function in R to test the two samples. Our null hypothesis is that if you chose randomly selected values from each population, then the probability of X being greater than Y is the same as the probability of Y being greater than X. The alternative hypothesis is the opposite, in that the populations are different (coded as `alternative = "two.sided"`) . Compare the results of the Wilcoxon rank sum test against the Welch two-sided t-test.
+
+```{r}
+
+```
+
+The results of the Wilcoxon rank sum test tell us that the two populations are not significantly different. Do you get the same results from a Welch two-sided t-test?
+
+```{r}
+
+```
+
+The results are the same. p \> 0.05. But hold on! The p-values for each test are different. (Albeit by only 0.04). While we haven't seen it here, the difference in testing strategy could be the make or break decision in a research project about whether two samples are different.
+
+In more complicated cases, it is not uncommon to transform your data (e.g. via a log transform). We will touch on this in a later session (as it is relevant to our gas-exchange analysis). This is one way to deal with non-normal distributions.
+
+### 
+
+A general note:
+
+If you are ever curious of what type of statistical test to do, I recommend writing down everything you know about your data, and then making an intuitive google attempt with your findings. There are hundreds, if not thousands of examples of statistical tests online. The hard part is deciphering them and making sure you have the right test for your data.
+
+------------------------------------------------------------------------
+
+## Part 3) Diagnostic Tests and ROC Analysis
+
+For this next section, we are going to consider diagnostic tests, and how to assess their effectiveness. To help us understand this, let's work through a case study.
+
+#### Load the `pROC` package from R:
+
+```{r}
+# install.packages("pROC")
+library(pROC)
+```
+
+We are going to study the `aSAH` data from the `pROC` package. This dataset summarizes several clinical and one laboratory variable of 113 patients with an aneurysmal subarachnoid hemorrhage. In this task, our goal is to examine whether a subject develops brain damage 14 months after surgery for a hemorrhage. We will use measurements levels of the protein: s100b, as a biomarker to determine whether a subject developed brain surgery. To find out more information about the data, type `?aSAH` into the command window.
+
+Examine the data:
+
+```{r}
+
+```
+
+Question: Is s100b a good discriminator? Is there a *prima facie* (correct until proven otherwise) case for adopting this protein as a discriminator? Let us answer this question.
+
+Segregate the aSAH data by outcome.
+
+```{r}
+
+```
+
+What is the distribution of this protein for good and poor outcome patients?
+
+```{r}
+
+```
+
+The protein values of poor outcome patients tend to be larger than the protein values in the good outcome patients.
+
+#### **Here is an idea for a diagnostic test:**
+
+IF the protein value is large, I suspect brain damage after 1 year (i.e. poor outcome after 14 months). MY diagnostic test will be of the following *mien* (manner, characteristic, etc):
+
+-   Test is positive if: s100b \>= $c$
+
+-   Test is negative if: s100b \< $c$
+
+Where $c$ is the cutoff value between good and bad outcomes. Choose $c$ judiciously. Choose a $c$ with high sensitivity and high specificity.
+
+But... how do you choose $c$? You experiment with different $c$ and see what turns out the best. First, let us look at the distribution of the protein values by outcome using a non-parametric density curve (in the same graph):
+
+```{r}
+
+```
+
+The density curve for good patients is spiky and concentrated about 2 different s100b protein values, while the density curve for poor patients is spread out. Thus, we can be optimistic that this would be a good predictor for future outcomes.
+
+#### Now, the hard work: choose $c$ (the cut off point).
+
+Let us build a 2x2 contingency table, and calculate sensitivity and specificity. For this table, let $c$ = 0.2, to start. The diagnostic test will be:
+
+-   Test is positive (poor outcome) if: s100b \>= 0.2
+
+-   Test is negative (good outcome) if: s100b \< 0.2
+
+**Look at the good outcome data on s100b:**
+
+How many of these observations are greater than or equal to 0.2?
+
+How many of these observations are less than 0.2?
+
+```{r}
+
+```
+
+14 of the 72 s100b values of the good patients are \>= 0.2.
+
+Therefore, 58 (72 - 14) s100b values of the good patients are \< 0.2. Meanwhile for poor patients:
+
+```{r}
+
+```
+
+26 of the 41 s100b values of the poor patients are \>= 0.2.
+
+Therefore, 15 (41 - 26) s100b values of the poor patients are \< 0.2.
+
+So, the 2x2 contingency table is:
+
+| Test result    | Good outcome | Poor outcome |
+|----------------|--------------|--------------|
+| Test postitive | 14           | **26**       |
+| Test negative  | **58**       | 15           |
+
+You can calculate the sensitivity (true positive) and specificity (true negative) values from this table.
+
+-   Sensitivity = 26/41
+
+-   Specificity = 58/72
+
+Ideally, you want a sensitivity and specificity square sum as close to 1 as possible. This is known as the **gold standard**. On the other hand, you could have a sensitivity and specificity square sum equal to 0.5, which would mean your test is pointless - there is no certainty in your results.
+
+You can change $c$, and do all these calculations again to find the optimal sensitivity and specificity combination. To do this manually would be very labour intensive. Thankfully, R can do it all for us. Use the function: `roc` from the `pROC` package.
+
+```{r}
+
+```
+
+Let us examine the results of this function:
+
+```{r}
+
+```
+
+We can extract a table containing the sensitivity and specificity values for a range of cut-off values. We have to create this from the output of the `roc` function.
+
+```{r}
+
+```
+
+Suppose we want to plot this data. One common way to do this is to plot **Sensitivity vs (1 - Specificity)**. Then, you can overlay a line correlating to all the points where the square sum between sensitivity and specificity equals 1. This kind of plot is known as an **ROC** curve:
+
+```{r}
+
+```
+
+In this plot, every point along the ROC curve correlates to an individual cut-off value. If a cut-off value was useless, then the sensitivity/specificity combination would lie on the diagonal line. If a cut-off value was exceptional (i.e. produced sensitivity = 1, specificity = 1), then the point would lie in the top corner - at the furthest position away from the diagonal line. If a biomarker was completely useless for all cut-off values, then the area under the curve would equal 0.5. You can find the area under the curve using: `MyROC$auc`.
+
+Let us go back to the original question: what value of $c$ makes the best biomarker for us?
+
+To recommend a $c$, consider the ideal biomarker:
+
+-   Ideal sensitivity = 1.0
+
+-   Ideal specificity = 1.0
+
+Take any $c$, and look at its (Sensitivity, Specificity). How close are each of them to (1.0, 1.0)? Calculate the Euclidean distance:
+
+```{r}
+
+```
+
+Our optimal criterion: Choose c such that its sensitivity and specificity are closest to (1.0, 1.0).
+
+```{r}
+
+```
+
+This correlates to...
+
+-   My test is positive if: s100b \>= 0.205
+
+-   My test is negative if: s100b \< 0.205
+
+-   The sensitivity is = 63.41%
+
+-   The specificity is = 80.56%
+
+Final flourish: Mark this on the ROC graph.
+
+```{r}
+
+```
+
+## Next session: Logistics, Linear Regression, Non-linear Regression
