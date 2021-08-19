@@ -53,6 +53,8 @@ I want to know how many hours each student slept. We use the columns: 'ToSleep' 
 
 ```{r}
 studentdata$HoursSlept <- studentdata$WakeUp - studentdata$ToSleep
+# Add this line to allow the shapiro.wilk test to deal with the 'discrete' data points in the HoursSlept
+studentdata$HoursSlept <- studentdata$HoursSlept + runif(657, -0.25, 0.25) # Add random noise to each data point 
 names(studentdata)
 head(studentdata)
 dim(studentdata)
